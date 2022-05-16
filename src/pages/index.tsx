@@ -2,16 +2,16 @@ import Head from "next/head";
 import { SubscribeButton } from "../components/SubscribeButton";
 import styles from "./home.module.scss";
 import { GetServerSideProps } from "next";
-import Stripe from "stripe";
+import { stripe } from "../services/stripe";
 
 interface HomeProps {
   product: {
     priceId: string;
     amount: number;
-  }
+  };
 }
 
-export default function Home(props: HomeProps) {
+export default function Home({ product }: HomeProps) {
   return (
     <>
       <Head>
@@ -26,7 +26,7 @@ export default function Home(props: HomeProps) {
           </h1>
           <p>
             get access to all the publications <br />
-            <span>for {props.product.amount} month</span>
+            <span>for {product.amount} month</span>
           </p>
           <SubscribeButton />
         </section>
@@ -38,19 +38,21 @@ export default function Home(props: HomeProps) {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const price = await Stripe.prices.retrieve('price_1Kv2gPFJcXp4f1xFx06xmz8w', {
-    expand: ['product']
-  })
+  const price = await stripe.prices.retrieve("price_1Kv2gPFJcXp4f1xFx06xmz8w", {
+    expand: ["product"],
+  });
 
   const product = {
     priceId: price.id,
-    amount: price.unit_amount / 100,
-
-  }
+    amount: new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price.unit_amount / 100),
+  };
 
   return {
     props: {
       product,
-    }
-  }
+    },
+  };
 };
